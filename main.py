@@ -30,7 +30,7 @@ def obter_contatos():
         return []
 
 def enviar_mensagem(nome, telefone):
-    mensagem = f"Olá, {nome} tudo bem com você?"
+    mensagem = f"Olá, {nome}, tudo bem com você?"
     payload = {"phone": telefone, "message": mensagem}
     
     try:
