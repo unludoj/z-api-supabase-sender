@@ -14,8 +14,9 @@ load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 ZAPI_URL = os.getenv("ZAPI_URL")
+ZAPI_CLIENT_TOKEN = os.getenv("ZAPI_CLIENT_TOKEN")
 
-if not all([SUPABASE_URL, SUPABASE_KEY, ZAPI_URL]):
+if not all([SUPABASE_URL, SUPABASE_KEY, ZAPI_URL, ZAPI_CLIENT_TOKEN]):
     logging.error("Variáveis de ambiente não configuradas corretamente no .env")
     exit(1)
 
@@ -33,8 +34,13 @@ def enviar_mensagem(nome, telefone):
     mensagem = f"Olá, {nome}, tudo bem com você?"
     payload = {"phone": telefone, "message": mensagem}
     
+    headers = {
+        "Client-Token": ZAPI_CLIENT_TOKEN,
+        "Content-Type": "application/json"
+    }
+
     try:
-        response = requests.post(ZAPI_URL, json=payload, timeout=10)
+        response = requests.post(ZAPI_URL, json=payload, headers=headers, timeout=10)
         response.raise_for_status() 
         
         logging.info(f"Mensagem enviada com sucesso para {nome} ({telefone})")
@@ -45,6 +51,7 @@ def enviar_mensagem(nome, telefone):
         return False
     except requests.exceptions.RequestException as e:
         logging.error(f"Erro na requisição da Z-API para {nome}: {e}")
+        logging.error(f"Detalhes do bloqueio na Z-API: {e.response.text}")
         return False
 
 def main():
