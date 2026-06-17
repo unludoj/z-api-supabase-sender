@@ -1,4 +1,5 @@
 import os
+import re
 import logging
 import requests
 from dotenv import load_dotenv
@@ -22,9 +23,17 @@ if not all([SUPABASE_URL, SUPABASE_KEY, ZAPI_URL, ZAPI_CLIENT_TOKEN]):
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+def validar_telefone(telefone):
+    """
+    Remove caracteres não numéricos e valida se o telefone 
+    possui entre 11 e 13 dígitos (padrão Brasil com ou sem DDI).
+    """
+    telefone_limpo = re.sub(r'\D', '', str(telefone))
+    return bool(re.match(r'^\d{11,13}$', telefone_limpo))
+
 def obter_contatos():
     try:
-        response = supabase.table("contatos").select("*").limit(3).execute()
+        response = supabase.table("contatos").select("*").limit(10).execute()
         return response.data
     except Exception as e:
         logging.error(f"Erro ao buscar contatos no Supabase: {e}")
@@ -73,6 +82,11 @@ def main():
         telefone = contato.get("telefone")
         
         if nome and telefone:
+            if not validar_telefone(telefone):
+                logging.warning(f"Contato ignorado por telefone inválido: {telefone}")
+                falha += 1
+                continue
+
             if enviar_mensagem(nome, telefone):
                 sucesso += 1
             else:
